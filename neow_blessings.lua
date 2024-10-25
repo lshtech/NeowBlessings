@@ -339,23 +339,23 @@ function SMODS.INIT.NeowBlessings()
         return result
     end
 
-    function replace_jimbo_sprite()
-        -- remove old Jimbo
-        jimbo = G.BLESSINGS_JIMBO
-        jimbo.children.card:remove()
-        jimbo.children.card = Card(jimbo.T.x, jimbo.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, j_neow, {bypass_discovery_center = true})
-        jimbo.children.card.states.visible = false
-        jimbo.children.card:start_materialize({G.C.BLUE, G.C.WHITE, G.C.RED})
-        jimbo.children.card:set_alignment{
-            major = jimbo, type = 'cm', offset = {x=0, y=0}
-        }
-        jimbo.children.card.jimbo = jimbo
-        jimbo.children.card.states.collide.can = true
-        jimbo.children.card.states.focus.can = false
-        jimbo.children.card.states.hover.can = true
-        jimbo.children.card.states.drag.can = false
-        jimbo.children.card.hover = Node.hover
-    end
+     function replace_jimbo_sprite()
+    --     -- remove old Jimbo
+    --     jimbo = G.BLESSINGS_JIMBO
+    --     jimbo.children.card:remove()
+    --     jimbo.children.card = Card(jimbo.T.x, jimbo.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, j_neow, {bypass_discovery_center = true})
+    --     jimbo.children.card.states.visible = false
+    --     jimbo.children.card:start_materialize({G.C.BLUE, G.C.WHITE, G.C.RED})
+    --     jimbo.children.card:set_alignment{
+    --         major = jimbo, type = 'cm', offset = {x=0, y=0}
+    --     }
+    --     jimbo.children.card.jimbo = jimbo
+    --     jimbo.children.card.states.collide.can = true
+    --     jimbo.children.card.states.focus.can = false
+    --     jimbo.children.card.states.hover.can = true
+    --     jimbo.children.card.states.drag.can = false
+    --     jimbo.children.card.hover = Node.hover
+     end
 
     -- utility function to compare the contents of two tables
     function equals(o1, o2, ignore_mt)
