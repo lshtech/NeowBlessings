@@ -171,7 +171,36 @@ function SMODS.INIT.NeowBlessings()
         ["Yorick"] = {effect = "Multiplicative Mult", rarity = "Legendary"},
         ["Chicot"] = {effect = "Effect", rarity = "Legendary"},
         ["Perkeo"] = {effect = "Effect", rarity = "Legendary"},
-    }    
+    }
+
+    local function create_joker(effect, rarity)
+        local pool, pool_key = get_current_pool('Joker', rarity)
+        local choices = {}
+        for k,v in pairs(pool) do
+            if G.P_CENTERS[v] then
+                local joker = joker_effects[G.P_CENTERS[v].name]
+                if joker and (not effect or string.match(joker.effect, effect)) then
+                    table.insert(choices, v)
+                end
+            end
+        end
+        local key = pseudorandom_element(choices, pseudoseed(mod_name))
+        local card = create_card('Joker', G.jokers, nil, 0, nil, nil, key, nil)
+        card:add_to_deck()
+        G.jokers:emplace(card)
+        card:start_materialize()
+        G.GAME.used_jokers[key] = true
+    end
+
+    local function create_booster(tag, type)
+        local key = 'p_' .. tag .. '_' .. type .. '_1'
+        local card = Card(G.play.T.x + G.play.T.w/2 - G.CARD_W*1.27/2,
+        G.play.T.y + G.play.T.h/2-G.CARD_H*1.27/2, G.CARD_W*1.27, G.CARD_H*1.27, G.P_CARDS.empty, G.P_CENTERS[key], {bypass_discovery_center = true, bypass_discovery_ui = true})
+        card.cost = 0
+        G.FUNCS.use_card({config = {ref_table = card}})
+        card:start_materialize()
+    end
+
     local blessings = {
         {
             key = "common_mult_joker",
@@ -297,35 +326,9 @@ function SMODS.INIT.NeowBlessings()
                 "2 Joker cards"
         },  
     }
-    function create_joker(effect, rarity)
-        pool, pool_key = get_current_pool('Joker', rarity)
-        choices = {}
-        for k,v in pairs(pool) do
-            if G.P_CENTERS[v] then
-                joker = joker_effects[G.P_CENTERS[v].name]
-                if joker and (not effect or string.match(joker.effect, effect)) then
-                    table.insert(choices, v)
-                end
-            end
-        end
-        key = pseudorandom_element(choices, pseudoseed(mod_name))
-        local card = create_card('Joker', G.jokers, nil, 0, nil, nil, key, nil)
-        card:add_to_deck()
-        G.jokers:emplace(card)
-        card:start_materialize()
-        G.GAME.used_jokers[key] = true       
-    end
 
-    function create_booster(tag, type)
-        local key = 'p_' .. tag .. '_' .. type .. '_1'
-        local card = Card(G.play.T.x + G.play.T.w/2 - G.CARD_W*1.27/2,
-        G.play.T.y + G.play.T.h/2-G.CARD_H*1.27/2, G.CARD_W*1.27, G.CARD_H*1.27, G.P_CARDS.empty, G.P_CENTERS[key], {bypass_discovery_center = true, bypass_discovery_ui = true})
-        card.cost = 0
-        G.FUNCS.use_card({config = {ref_table = card}})
-        card:start_materialize()
-    end
 
-    function random_n(n, i, j)
+    local function random_n(n, i, j)
         local result = {}
         local temp = setmetatable({}, { __index = function( _, i ) return i end })  -- helper table with index = value
         for k = 1, n do
@@ -339,17 +342,17 @@ function SMODS.INIT.NeowBlessings()
         return result
     end
 
-     function replace_jimbo_sprite()
+     local function replace_jimbo_sprite()
     --     -- remove old Jimbo
-    --     jimbo = G.BLESSINGS_JIMBO
-    --     jimbo.children.card:remove()
-    --     jimbo.children.card = Card(jimbo.T.x, jimbo.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, j_neow, {bypass_discovery_center = true})
-    --     jimbo.children.card.states.visible = false
-    --     jimbo.children.card:start_materialize({G.C.BLUE, G.C.WHITE, G.C.RED})
-    --     jimbo.children.card:set_alignment{
-    --         major = jimbo, type = 'cm', offset = {x=0, y=0}
-    --     }
-    --     jimbo.children.card.jimbo = jimbo
+        -- local jimbo = G.BLESSINGS_JIMBO
+        -- jimbo.children.card:remove()
+        -- jimbo.children.card = Card(jimbo.T.x, jimbo.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, j_neow, {bypass_discovery_center = true})
+        -- jimbo.children.card.states.visible = false
+        -- jimbo.children.card:start_materialize({G.C.BLUE, G.C.WHITE, G.C.RED})
+        -- jimbo.children.card:set_alignment{
+        --     major = jimbo, type = 'cm', offset = {x=0, y=0}
+        -- }
+        -- jimbo.children.card.jimbo = jimbo
     --     jimbo.children.card.states.collide.can = true
     --     jimbo.children.card.states.focus.can = false
     --     jimbo.children.card.states.hover.can = true
@@ -358,7 +361,7 @@ function SMODS.INIT.NeowBlessings()
      end
 
     -- utility function to compare the contents of two tables
-    function equals(o1, o2, ignore_mt)
+    local function equals(o1, o2, ignore_mt)
         if o1 == o2 then return true end
         local o1Type = type(o1)
         local o2Type = type(o2)
@@ -389,9 +392,36 @@ function SMODS.INIT.NeowBlessings()
         return true
     end
 
-    function create_blessings_overlay(forced_blessing_index)
+    
+    -- Custom function to create two separate elements on the overlay menu, the box containing the blessings options and the Neow card
+    local function createNeowBox()
+        
+        -- todo: add exit button? or maybe remove the no_back flag. I personally prefer it without but let's see others opinion on this.
+        local t =  create_UIBox_generic_options({ contents = buttons, no_back=true})
+        t.nodes[1] = {n=G.UIT.R, config={align = "cm", padding = 0.1}, nodes={
+
+            -- First, the blessings box
+            {n=G.UIT.C, config={align = "tm", padding = 0.3}, nodes={ {n=G.UIT.R, config={align = "cm"}, 
+                nodes={
+                    {n=G.UIT.O,
+                    -- todo: create localization strings
+                    config={object = DynaText({string = {"Choose your blessing"}, colours = {G.C.MONEY},shadow = true, float = true, scale = 1.5, pop_in = 0.4, maxw = 6.5})}
+                    }}},t.nodes[1]}},
+
+            -- Second, Neow card
+            {n=G.UIT.C, config={align = "cm", padding = 1}, nodes={
+                {n=G.UIT.R, config={align = "cm"}, nodes={
+                    {n=G.UIT.O, config={padding = 0, id = 'jimbo_spot', object = Moveable(0,0,G.CARD_W*1.1, G.CARD_H*1.1)}},
+                }},
+            }}
+            }
+        }
+        return t
+    end
+
+    local function create_blessings_overlay(forced_blessing_index)
         buttons = {}
-        blessings_indexes = random_n(4, 1, #blessings)
+        local blessings_indexes = random_n(4, 1, #blessings)
 
         for i=1, 4 do 
             -- forced blessing index useful to debug blessing functions during development, otherwise pick at random
@@ -403,9 +433,9 @@ function SMODS.INIT.NeowBlessings()
                 if equals(blessings[j].tooltip, tooltips[blessings[j].key]) then
                     buttons[i] = {n=G.UIT.R, config={align = "cm", padding = 0.1} , nodes={
                         Blessings_UIBox_button{id = 'blessing_' .. i, label = {blessings[j].desc}, button = 'blessing_' .. i, minw = 8,
-                        on_demand_tooltip = { text = tooltips[blessings[j].key]} 
+                        on_demand_tooltip = { text = tooltips[blessings[j].key]}
                         }
-                    }   
+                    }
                 }
                 end
             else
@@ -417,44 +447,17 @@ function SMODS.INIT.NeowBlessings()
             end
             G.FUNCS['blessing_' .. i] = blessings[j].f
         end
-        
+
         G.FUNCS.overlay_menu{
             definition = createNeowBox(),
             config = {no_esc = true}
         }
-        
     end
 
-    -- Custom function to create two separate elements on the overlay menu, the box containing the blessings options and the Neow card
-    function createNeowBox()
-        
-        -- todo: add exit button? or maybe remove the no_back flag. I personally prefer it without but let's see others opinion on this.
-        t =  create_UIBox_generic_options({ contents = buttons, no_back=true})
-        t.nodes[1] = {n=G.UIT.R, config={align = "cm", padding = 0.1}, nodes={
-
-            -- First, the blessings box
-            {n=G.UIT.C, config={align = "tm", padding = 0.3}, nodes={ {n=G.UIT.R, config={align = "cm"}, 
-                nodes={
-                    {n=G.UIT.O, 
-                    -- todo: create localization strings
-                    config={object = DynaText({string = {"Choose your blessing"}, colours = {G.C.MONEY},shadow = true, float = true, scale = 1.5, pop_in = 0.4, maxw = 6.5})}
-                    }}},t.nodes[1]}}, 
-
-            -- Second, Neow card
-            {n=G.UIT.C, config={align = "cm", padding = 1}, nodes={
-                {n=G.UIT.R, config={align = "cm"}, nodes={
-                    {n=G.UIT.O, config={padding = 0, id = 'jimbo_spot', object = Moveable(0,0,G.CARD_W*1.1, G.CARD_H*1.1)}},
-                }}, 
-            }}
-            }
-        }
-        return t
-    end
-
-    function draw_blessings_overlay()
+    local function draw_blessings_overlay()
         -- G.SETTINGS.paused = true
         create_blessings_overlay()
-        
+
         table.insert(G.I.POPUP, G.BLESSINGS_JIMBO)
         table.insert(G.OVERLAY_MENU.children, G.BLESSINGS_JIMBO)
 
@@ -494,9 +497,9 @@ function SMODS.INIT.NeowBlessings()
         args.focus_args = args.focus_args or nil
         args.text_colour = args.text_colour or G.C.UI.TEXT_LIGHT
         local but_UIT = args.col == true and G.UIT.C or G.UIT.R
-      
+
         local but_UI_label = {}
-      
+
         local button_pip = nil
         for k, v in ipairs(args.label) do 
           if k == #args.label and args.focus_args and args.focus_args.set_button_pip then 
@@ -506,7 +509,7 @@ function SMODS.INIT.NeowBlessings()
             {n=G.UIT.T, config={text = v, scale = args.scale, colour = args.text_colour, shadow = args.shadow, focus_args = button_pip and args.focus_args or nil, func = button_pip, ref_table = args.ref_table}}
           }})
         end
-      
+
         if args.count then 
           table.insert(but_UI_label, 
           {n=G.UIT.R, config={align = "cm", minh = 0.4}, nodes={
@@ -514,8 +517,8 @@ function SMODS.INIT.NeowBlessings()
           }}
           )
         end
-      
-        return 
+
+        return
         {n= but_UIT, config = {align = 'cm'}, nodes={
         {n= G.UIT.C, config={
             align = "cm",
@@ -545,7 +548,7 @@ function SMODS.INIT.NeowBlessings()
 
     local game_start_run_ref = Game.start_run
     function Game.start_run(self, args)
-        result = game_start_run_ref(self, args)
+        local result = game_start_run_ref(self, args)
         if not args.savetext then  -- it's a new game
             draw_blessings_overlay()
         end
