@@ -189,7 +189,9 @@ function SMODS.INIT.NeowBlessings()
         card:add_to_deck()
         G.jokers:emplace(card)
         card:start_materialize()
-        G.GAME.used_jokers[key] = true
+        if card and card.config and card.config.center and card.config.center.key then
+            G.GAME.used_jokers[card.config.center.key] = true
+        end
     end
 
     local function create_booster(tag, type)
